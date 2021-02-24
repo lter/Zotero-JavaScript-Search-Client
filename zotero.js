@@ -3,16 +3,16 @@
 "use strict";
 
 var ZOTERO_CONFIG = {
-   "zotId": "2211939", // ID of group or user library to search in Zotero, e.g., 2211939, 2055673
+   "zotId": "2055673", // ID of group or user library to search in Zotero, e.g., 2211939, 2055673
    "zotIdType": "group", // group or user
-   "collectionKey": "KHTHLKB5", // Key of collection within library to search, e.g., "KHTHLKB5", or "" if no collection
+   "collectionKey": "", // Key of collection within library to search, e.g., "KHTHLKB5", or "" if no collection
    "filterTags": "", // For filtering results by tag(s), e.g., "&tag=LTER-Funded".  See examples at https://www.zotero.org/support/dev/web_api/v3/basics
    "resultsElementId": "searchResults", // Element to contain results
-   "includeCols": ["Year", "Type", "ShowTags"], // Array of columns to include in the output table, other than Citation. The full set is ["Year", "Type", "ShowTags"]
+   "includeCols": ["Year", "Type", "ShowTags", "DOI"], // Array of columns to include in the output table, other than Citation. The full set is ["Year", "Type", "ShowTags"]
    "showTags": ["Foundational", "LTER-Funded", "LTER-Enabled"], // Include a column showing this tag if present for each item
-   "showTagColName": "Relationship", // Name for the column in HTML table under which the showTags will appear
+   "showTagColName": "", // Name for the column in HTML table under which the showTags will appear
    "style": "", // Bibliography display style, e.g., apa. Leave blank for default which is chicago-note-bibliography.
-   "limit": 10, // Max number of results to retrieve per page
+   "limit": 15, // Max number of results to retrieve per page
    "urlElementId": "searchUrl", // Element to display search URL
    "countElementId": "resultCount", // Element showing number of results
    "pagesTopElementId": "paginationTop", // Element to display result page links above results
@@ -20,6 +20,40 @@ var ZOTERO_CONFIG = {
    "showPages": 5, // MUST BE ODD NUMBER! Max number of page links to show
    "sortDiv": "sortDiv" // Element with interactive sort options
 };
+
+var LTER_sites = {  
+    "All Sites": "2055673",
+    "Andrews Forest": "ANKAH9EH",
+    "Arctic": "PGKRZUNA",
+    "Baltimore Ecosystem Study": "GVEHGGFG",
+    "Beaufort Lagoon Ecosystem": "MDCIDVLB",
+    "Bonanza Creek LTER": "2H82I4FZ",
+    "California Current": "YFB74WVQ",
+    "Cedar Creek LTER": "BNMUPDXZ",
+    "Central Arizona-Phoenix": "JZMSIAFI",
+    "Coweeta": "D3W8GCE9",
+    "Florida Coastal Everglades": "DLT7IN8P",
+    "Georgia Coastal Ecosystems": "KGWA9WGB",
+    "Harvard Forest": "G8XVFB85",
+    "Hubbard Brook": "V49GTIT2",
+    "Jornada Basin": "D5HJQCSG",
+    "Kellogg Biological Station": "AEI8R26L",
+    "Konza Prairie": "ZG8454NQ",
+    "Luquillo": "RE8L92KK",
+    "McMurdo Dry Valleys": "7MV96MU3",
+    "Moorea Coral Reef": "6Q9AFX7Q",
+    "Niwot Ridge": "MHT47JVG",
+    "North Temperate Lakes": "8BW9MHXF",
+    "Northeast U.S. Shelf": "Q3KDPTIE",
+    "Northern Gulf of Alaska": "JJY374KY",
+    "Palmer Antarctic": "MLZVWFSQ",
+    "Plum Island": "EBT9LAV8",
+    "Santa Barbara Coastal": "VBCJ4DCQ",
+    "Sevilleta": "PAPFSQXK",
+    "Shortgrass Steppe": "Z5ZPTVG4",
+    "Special Issues": "NFNEHIYE",
+    "Virginia Coast Reserve": "YZQQ9V6J"
+}
 
 
 // Get URL arguments
@@ -36,6 +70,7 @@ function getParameterByName(name, url) {
 
 // Parse Zotero search results into HTML
 function parseZoteroResults(resultText) {
+  console.log(resultText)
    function parseYear(text) {
       function isYear(yearText) {
          // Assumes year is between 1000 and current year + 5
@@ -188,6 +223,7 @@ function parseZoteroResults(resultText) {
    var showYear = (ZOTERO_CONFIG["includeCols"].indexOf("Year") !== -1);
    var showType = (ZOTERO_CONFIG["includeCols"].indexOf("Type") !== -1);
    var showTags = (ZOTERO_CONFIG["includeCols"].indexOf("ShowTags") !== -1);
+   var showDOI = (ZOTERO_CONFIG["includeCols"].indexOf("DOI") !== -1);
    if (ZOTERO_CONFIG["includeCols"].length > 0) {
       header += "<thead><tr>";
       if (showYear) {
@@ -213,13 +249,25 @@ function parseZoteroResults(resultText) {
       }
       var itemType = parseType(result["data"]["itemType"]);
       var tagsToShow = parseShowTags(result["data"]["tags"]);
-      var itemLink = parseItemLink(result["data"]["url"]);
-      var dataLinks = parseDataLinks(result["data"]["extra"]);
+      //var itemLink = parseItemLink(result["data"]["url"]);
+      //var dataLinks = parseDataLinks(result["data"]["extra"]);
       var row = "<tr>";
       if (showYear) {
          row += "<td>" + year + "</td>";
       }
-      row += "<td>" + result["bib"] + itemLink + " " + dataLinks + "</td>";
+      if(result["data"]["DOI"]) {
+        var firstQuote = result["bib"].indexOf("&#x201C");
+        
+        var bibWithLink = [result["bib"].slice(0, firstQuote), "<a target=_blank href=https://doi.org/" + result["data"]["DOI"]+">", result["bib"].slice(firstQuote)].join('');
+        
+        var secondQuote = bibWithLink.indexOf("&#x201D");
+        bibWithLink = [bibWithLink.slice(0, secondQuote), "</a>", bibWithLink.slice(secondQuote)].join('');
+
+        row += "<td>" + bibWithLink + "</td>";
+      } else {
+        row += "<td>" + result["bib"] + "</td>";
+      }
+      
       if (showType) {
          row += "<td>" + itemType + "</td>";
       }
@@ -280,16 +328,6 @@ function errorCallback() {
    alert("There was an error making the request.");
 }
 
-
-// Writes CORS request URL to the page so user can see it
-function showUrl(url) {
-   var element = document.getElementById(ZOTERO_CONFIG["urlElementId"]);
-   if (!element) return;
-   var txt = '<a href="' + url + '" target="_blank">' + url + '</a>';
-   element.innerHTML = txt;
-}
-
-
 function encodeStyle(style) {
    return style.replace(/\//g, '%3A').replace(/:/g, '%2F');
 }
@@ -297,6 +335,14 @@ function encodeStyle(style) {
 
 // Passes search URL and callbacks to CORS function
 function searchZotero(query, itemType, sort, start) {
+  // Get the selected LTER site
+   var searchFormElement = document.getElementById("lterSiteSelect");
+   var selectedSiteId = LTER_sites[searchFormElement.options[searchFormElement.selectedIndex].text];
+   console.log(selectedSiteId);
+   if (selectedSiteId != ZOTERO_CONFIG["zotId"]) {
+     console.log("Not equal")
+    ZOTERO_CONFIG["collectionKey"] = selectedSiteId;
+   }
    var zotId = (ZOTERO_CONFIG["zotIdType"] === "group") ? "groups/" + ZOTERO_CONFIG["zotId"] : "users/" + ZOTERO_CONFIG["zotId"];
    var collection = (ZOTERO_CONFIG["collectionKey"] === "") ? "" : "/collections/" + ZOTERO_CONFIG["collectionKey"];
    var base = "https://api.zotero.org/" + zotId + collection + "/items?v=3&include=bib,data";
@@ -305,7 +351,6 @@ function searchZotero(query, itemType, sort, start) {
       "&sort=" + sort + "&start=" + start + ZOTERO_CONFIG["filterTags"];
    var limit = "&limit=" + ZOTERO_CONFIG["limit"];
    var url = base + params + style + limit;
-   showUrl(url);
    showLoading(true);
    makeCorsRequest(url, successCallback, errorCallback);
 }
@@ -364,17 +409,19 @@ function initCollapsible(expanded) {
 }
 
 function initForm(formId, expanded) {
-   initCollapsible(expanded);
 
    var sortControl = document.getElementById("visibleSort");
    if (sortControl) {
       sortControl.onchange = function () {
-         var hiddenSortControl = document.getElementById("sort");
+         var hiddenSortControl = document.getElementById("visibleSort");
          hiddenSortControl.value = this.options[this.selectedIndex].value;
          var form = document.getElementById(formId);
          form.submit();
       };
    }
+   $.each(LTER_sites, function(i, option) {
+    $('#lterSiteSelect').append($('<option/>').attr("value", i).text(i));
+});
 }
 
 
@@ -403,6 +450,7 @@ window.onload = function () {
    var expanded = Boolean(getParameterByName("expanded"));
    var pageStart = getParameterByName("start") || 0;
    var sortParam = getParameterByName("sort") || "date";
+   var selectedSite = getParameterByName("lterSite") || "All Sites";
 
    document.forms.zoteroSearchForm.q.value = query;
    var itemType = setSelectValue("itemType", itemTypeParam);
@@ -412,7 +460,15 @@ window.onload = function () {
       document.forms.zoteroSearchForm.sort.value = sort;
    }
 
-   initForm("zoteroSearchForm", expanded);
+   const myPromise = new Promise((resolve, reject) => {  
+    initForm("zoteroSearchForm", expanded);
+    resolve('Promise is resolved successfully.');  
+  });
 
-   searchZotero(query, itemType, sort, pageStart);
+  myPromise.then(() => {
+    $("#lterSiteSelect").val(selectedSite).change();
+
+    searchZotero(query, itemType, sort, pageStart);
+    
+  });
 };

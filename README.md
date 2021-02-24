@@ -1,29 +1,13 @@
 # [Zotero-JavaScript-Search-Client](https://github.com/BLE-LTER/Zotero-JavaScript-Search-Client)
 
-Example HTML, CSS, and JavaScript for searching for items within a public Zotero
-user or group library
+Code for the LTER Bibliography search page
 
-[See the Repo](https://github.com/BLE-LTER/Zotero-JavaScript-Search-Client)
+[BLE-LTER Zotero Search Client](https://github.com/BLE-LTER/Zotero-JavaScript-Search-Client)
 
-Live demos:
-
-* [Basic example](https://ble-lter.github.io/Zotero-JavaScript-Search-Client/minimal.html)
-* [Complete example](https://ble-lter.github.io/Zotero-JavaScript-Search-Client/complete.html)
-
-## Motivation
-
-To help users discover your publications, you can add them to an online database like Zotero and then present a search interface to that database on your website. Modules for doing so have been written for WordPress and Drupal, but I hadn't seen one for static HTML sites, so I wrote this example to test how feasible a static HTML Zotero client would be to implement.
 
 ## Usage
 
-Open the zotero.html file in your browser and enter a search term like
-`coastal`. Click the search button and see results as formatted by Zotero to the page.
-
-You can click Search with no terms specified to show the entire catalog, which is the default behavior when you load the page.
-
-Zotero limits the number of results returned in a single request, so the page supports pagination to get additional results.
-
-To use this for your own project, you will need a free Zotero account into which you include your publications, and obviously you'll need to adapt the HTML, CSS, etc., for your particular website.
+This code is best tested on a live WordPress site due to the css changes that WordPress makes. The css in this repository is meant to be used in conjunction with LTER's WordPress theme. During deployment, be sure to point to the correct locations to the CSS and Javascript files in the head.
 
 ## Customization
 
